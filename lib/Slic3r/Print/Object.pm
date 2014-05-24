@@ -854,20 +854,26 @@ sub discover_horizontal_shells {
                     
                     # internal-solid are the union of the existing internal-solid surfaces
                     # and new ones
-                    my $internal_solid = union_ex([
+                    my $internal_solid = union([
                         ( map $_->p, grep $_->surface_type == S_TYPE_INTERNALSOLID, @neighbor_fill_surfaces ),
                         @$new_internal_solid,
                     ]);
                     
                     # subtract intersections from layer surfaces to get resulting internal surfaces
-                    my $internal = diff_ex(
+                    my $internal = diff(
                         [ map $_->p, grep $_->surface_type == S_TYPE_INTERNAL, @neighbor_fill_surfaces ],
-                        [ map @$_, @$internal_solid ],
+                        $internal_solid,
                         1,
                     );
                     Slic3r::debugf "    %d internal-solid and %d internal surfaces found\n",
                         scalar(@$internal_solid), scalar(@$internal);
                     
+                    # we don't want to affect top, bottom and, most importantly, bottom bridge surfaces!
+                    my @neighbor_solid = grep { ($_->surface_type == S_TYPE_TOP) || $_->is_bottom } @neighbor_fill_surfaces;
+                    my $neighbor_solid_p = [ map { $_->p } @neighbor_solid ];
+                    $internal_solid = diff_ex($internal_solid, $neighbor_solid_p) if @$internal_solid;
+                    $internal = diff_ex($internal, $neighbor_solid_p) if @$internal;
+
                     # assign resulting internal surfaces to layer
                     $neighbor_fill_surfaces->clear;
                     $neighbor_fill_surfaces->append(map Slic3r::Surface->new
@@ -878,14 +884,7 @@ sub discover_horizontal_shells {
                         (expolygon => $_, surface_type => S_TYPE_INTERNALSOLID), @$internal_solid);
                     
                     # assign top and bottom surfaces to layer
-                    foreach my $s (@{Slic3r::Surface::Collection->new(grep { ($_->surface_type == S_TYPE_TOP) || $_->is_bottom } @neighbor_fill_surfaces)->group}) {
-                        my $solid_surfaces = diff_ex(
-                            [ map $_->p, @$s ],
-                            [ map @$_, @$internal_solid, @$internal ],
-                            1,
-                        );
-                        $neighbor_fill_surfaces->append(map $s->[0]->clone(expolygon => $_), @$solid_surfaces);
-                    }
+                    $neighbor_fill_surfaces->append(@neighbor_solid);
                 }
             }
         }
