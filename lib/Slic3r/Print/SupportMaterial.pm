@@ -681,21 +681,21 @@ sub generate_toolpaths {
                 $filler->angle($self->object_config->support_material_angle + 90);
                 $density        = 0.5;
                 $base_flow      = $self->first_layer_flow;
-            } else {
-                # draw a perimeter all around support infill
-                # TODO: use brim ordering algorithm
-                my $mm3_per_mm = $flow->mm3_per_mm;
-                push @paths, map Slic3r::ExtrusionPath->new(
-                    polyline    => $_->split_at_first_point,
-                    role        => EXTR_ROLE_SUPPORTMATERIAL,
-                    mm3_per_mm  => $mm3_per_mm,
-                    width       => $flow->width,
-                    height      => $layer->height,
-                ), map @$_, @$to_infill;
-                
-                # TODO: use offset2_ex()
-                $to_infill = offset_ex([ map @$_, @$to_infill ], -$flow->scaled_spacing);
             }
+
+            # draw a perimeter all around support infill
+            # TODO: use brim ordering algorithm
+            my $mm3_per_mm = $flow->mm3_per_mm;
+            push @paths, map Slic3r::ExtrusionPath->new(
+                polyline    => $_->split_at_first_point,
+                role        => EXTR_ROLE_SUPPORTMATERIAL,
+                mm3_per_mm  => $mm3_per_mm,
+                width       => $flow->width,
+                height      => $layer->height,
+            ), map @$_, @$to_infill;
+
+            # TODO: use offset2_ex()
+            $to_infill = offset_ex([ map @$_, @$to_infill ], -$flow->scaled_spacing);
             
             foreach my $expolygon (@$to_infill) {
                 my ($params, @p) = $filler->fill_surface(
