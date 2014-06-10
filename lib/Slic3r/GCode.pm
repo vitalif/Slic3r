@@ -605,7 +605,7 @@ sub set_extruder {
         ($self->config->gcode_flavor eq 'makerware'
             ? 'M135 T'
             : $self->config->gcode_flavor eq 'sailfish'
-                ? 'M108 T'
+                ? 'M135 T' # M108 T
                 : 'T'),
         $extruder_id,
         ($self->config->gcode_comments ? ' ; change extruder' : '');
