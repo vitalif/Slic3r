@@ -625,9 +625,25 @@ sub generate_toolpaths {
                 }
             }
             $base = diff($base, $interface);
-            
+
             my @paths = ();
-            foreach my $expolygon (@{union_ex($interface)}) {
+            my $to_infill = union_ex($interface);
+            
+            # draw a perimeter all around interface infill
+            # TODO: use brim ordering algorithm
+            my $mm3_per_mm = $flow->mm3_per_mm;
+            push @paths, map Slic3r::ExtrusionPath->new(
+                polyline    => $_->split_at_first_point,
+                role        => EXTR_ROLE_SUPPORTMATERIAL_INTERFACE,
+                mm3_per_mm  => $mm3_per_mm,
+                width       => $flow->width,
+                height      => $layer->height,
+            ), map @$_, @$to_infill;
+
+            # TODO: use offset2_ex()
+            $to_infill = offset_ex([ map @$_, @$to_infill ], -$flow->scaled_spacing);
+            
+            foreach my $expolygon (@$to_infill) {
                 my ($params, @p) = $fillers{interface}->fill_surface(
                     Slic3r::Surface->new(expolygon => $expolygon, surface_type => S_TYPE_INTERNAL),
                     density     => $interface_density,
