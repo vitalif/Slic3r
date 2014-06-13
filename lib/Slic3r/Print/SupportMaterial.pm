@@ -534,7 +534,10 @@ sub generate_toolpaths {
             # if no interface layers were requested we treat the contact layer
             # exactly as a generic base layer
             push @$base, @$contact;
-        } elsif (@$contact && $contact_loops > 0) {
+        } else {
+            push @$interface, @$contact;
+        }
+        if (0 && @$contact && $contact_loops > 0) { # WTF?!!
             # generate the outermost loop
             
             # find centerline of the external loop (or any other kind of extrusions should the loop be skipped)
