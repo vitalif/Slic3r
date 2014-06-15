@@ -67,7 +67,7 @@ sub new {
     # right pane with preview canvas
     my $canvas;
     if ($Slic3r::GUI::have_OpenGL) {
-        $canvas = $self->{canvas} = Slic3r::GUI::PreviewCanvas->new($self, $self->{model_object});
+        $canvas = Slic3r::GUI::PreviewCanvas->new($self, $self->{model_object});
         $canvas->SetSize([500,500]);
     }
     
@@ -92,6 +92,7 @@ sub new {
     EVT_BUTTON($self, $self->{btn_delete}, \&on_btn_delete);
     
     $self->reload_tree;
+    $self->{canvas} = $canvas;
     
     return $self;
 }
