@@ -767,7 +767,7 @@ sub discover_horizontal_shells {
                 ];
                 next if !@$solid;
                 Slic3r::debugf "Layer %d has %s surfaces\n", $i, ($type == S_TYPE_TOP) ? 'top' : 'bottom';
-                
+
                 my $solid_layers = ($type == S_TYPE_TOP)
                     ? $layerm->config->top_solid_layers
                     : $layerm->config->bottom_solid_layers;
@@ -793,8 +793,8 @@ sub discover_horizontal_shells {
                     # upper perimeter as an obstacle and shell will not be propagated to more upper layers
                     my $new_internal_solid = $solid = intersection(
                         $solid,
-                        [ map $_->p, grep { ($_->surface_type == S_TYPE_INTERNAL) || ($_->surface_type == S_TYPE_INTERNALSOLID) } @neighbor_fill_surfaces ],
-                        1,
+                        [ map $_->p, grep { ($_->surface_type == S_TYPE_INTERNAL) || ($_->surface_type == S_TYPE_INTERNALSOLID) } @{$neighbor_layerm->slices} ],
+                        0
                     );
                     next EXTERNAL if !@$new_internal_solid;
                     
@@ -844,6 +844,9 @@ sub discover_horizontal_shells {
                         }
                     }
                     
+                    # intersect with fill surfaces before assigning to object
+                    $new_internal_solid = intersection($new_internal_solid, [ map { $_->p } @neighbor_fill_surfaces ]);
+
                     # internal-solid are the union of the existing internal-solid surfaces
                     # and new ones
                     my $internal_solid = union([
